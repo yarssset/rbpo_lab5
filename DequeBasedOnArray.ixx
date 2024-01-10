@@ -1,4 +1,5 @@
 module;
+
 #include <iostream>
 using namespace std;
 
@@ -34,22 +35,13 @@ export namespace dynamic_structure
         }
 
         void clear() {
+            delete[] elements;
             front = 0;
             rear = 0;
             size = 0;
         }
 
-        bool PushFront(const T& element) {
-            if (size == capacity) {
-                resize();
-            }
-            front = (front - 1 + capacity) % capacity;
-            elements[front] = element;
-            size++;
-            return true;
-        }
-
-        bool PushBack(const T& element) {
+        bool Push(const T& element) override {
             if (size == capacity) {
                 resize();
             }
@@ -59,7 +51,7 @@ export namespace dynamic_structure
             return true;
         }
 
-        bool PopFront(T& element) {
+        bool Pop(T& element) override {
             if (size == 0) {
                 return false;
             }
@@ -69,17 +61,7 @@ export namespace dynamic_structure
             return true;
         }
 
-        bool PopBack(T& element) {
-            if (size == 0) {
-                return false;
-            }
-            rear = (rear - 1 + capacity) % capacity;
-            element = elements[rear];
-            size--;
-            return true;
-        }
-
-        bool PeekFront(T& element) const {
+        bool Peek(T& element) const override {
             if (size == 0) {
                 return false;
             }
@@ -87,47 +69,47 @@ export namespace dynamic_structure
             return true;
         }
 
-        bool PeekBack(T& element) const {
-            if (size == 0) {
-                return false;
-            }
-            element = elements[(rear - 1 + capacity) % capacity];
-            return true;
+        DequeBasedOnArray() : elements(nullptr), front(0), rear(0), size(0) {
+            elements = new T[capacity];
         }
 
-        DequeBasedOnArray() : elements(new T[capacity]), front(0), rear(0), size(0) {}
-        DequeBasedOnArray(const DequeBasedOnArray<T>& other) : DequeBasedOnArray() {
+        DequeBasedOnArray(const DequeBasedOnArray<T>& other) : elements(nullptr), front(0), rear(0), size(0) {
             *this = other;
         }
-        DequeBasedOnArray(DequeBasedOnArray<T>&& other) noexcept : elements(nullptr), front(0), rear(0), size(0) {
+
+        DequeBasedOnArray(DequeBasedOnArray<T>&& other) : elements(nullptr), front(0), rear(0), size(0) {
             *this = std::move(other);
         }
-        DequeBasedOnArray(std::initializer_list<T> ilist) : DequeBasedOnArray() {
+
+        DequeBasedOnArray(std::initializer_list<T> ilist) : elements(nullptr), front(0), rear(0), size(0) {
             *this = ilist;
         }
+
         ~DequeBasedOnArray() override {
-            delete[] elements;
+            clear();
         }
+
         DequeBasedOnArray<T>& operator=(const DequeBasedOnArray<T>& other) {
             if (this != &other) {
-                delete[] elements;
-                elements = new T[other.capacity];
+                clear();
                 front = other.front;
                 rear = other.rear;
                 size = other.size;
-                for (int i = 0; i < size; i++) {
+                elements = new T[capacity];
+                for (int i = 0; i < capacity; i++) {
                     elements[i] = other.elements[i];
                 }
             }
             return *this;
         }
-        DequeBasedOnArray<T>& operator=(DequeBasedOnArray<T>&& other) noexcept {
+
+        DequeBasedOnArray<T>& operator=(DequeBasedOnArray<T>&& other) {
             if (this != &other) {
-                delete[] elements;
-                elements = other.elements;
+                clear();
                 front = other.front;
                 rear = other.rear;
                 size = other.size;
+                elements = other.elements;
                 other.elements = nullptr;
                 other.front = 0;
                 other.rear = 0;
@@ -135,23 +117,21 @@ export namespace dynamic_structure
             }
             return *this;
         }
+
         DequeBasedOnArray<T>& operator=(std::initializer_list<T> ilist) {
-            delete[] elements;
-            elements = new T[ilist.size()];
-            front = 0;
-            rear = 0;
-            size = 0;
+            clear();
             for (const T& element : ilist) {
-                PushBack(element);
+                Push(element);
             }
             return *this;
         }
 
         friend std::ostream& operator<<(std::ostream& os, const DequeBasedOnArray<T>& deque) {
-            for (int i = deque.front; i != deque.rear; i = (i + 1) % deque.capacity) {
+            for (int i = deque.front; i != deque.rear; i = (i + 1) % capacity) {
                 os << deque.elements[i] << " ";
             }
             return os;
         }
     };
+
 }
